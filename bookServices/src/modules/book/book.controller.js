@@ -1,16 +1,29 @@
-import bookService from "./book.service.js";
+import { addBook, getBookById, listBooks } from "./book.service.js";
 
-const bookController = {
-  AddBook: async (call, callback) => {
-    const response = await bookService.addBook(call.request);
-    callback(null, response);
-  },  
-  GetBooks: async (call, callback) => {
-    const { books } = await bookService.getBooks();
-    callback(null, { books });
-  },
+
+export const AddBook = async (call, callback) => {
+  try {
+    const book = await addBook(call.request);
+    callback(null, book);
+  } catch (err) {
+    callback(err);
+  }
 };
 
+export const GetBookById = async (call, callback) => {
+  try {
+    const book = await getBookById(call.request);
+    callback(null, book);
+  } catch (err) {
+    callback(err);
+  }
+};
 
-
-export default bookController;
+export const ListBooks = async (call, callback) => {
+  try {
+    const books = await listBooks();
+    callback(null, books);
+  } catch (err) {
+    callback(err);
+  }
+};
