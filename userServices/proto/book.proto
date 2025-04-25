@@ -6,6 +6,7 @@ service BookService {
   rpc AddBook (AddBookRequest) returns (BookResponse);
   rpc GetBookById (GetBookRequest) returns (BookResponse);
   rpc ListBooks (Empty) returns (BookListResponse);
+  rpc DeleteBookById (GetBookRequest) returns (DeleteBookByIdResponse); 
 }
 
 message AddBookRequest {
@@ -29,4 +30,8 @@ message BookResponse {
 
 message BookListResponse {
   repeated BookResponse books = 1;
+}
+
+message DeleteBookByIdResponse {
+  string message = 1;
 }

@@ -1,40 +1,54 @@
-import grpc from "@grpc/grpc-js";
 import jwt from "jsonwebtoken";
+import grpc from "@grpc/grpc-js";
+import protoLoader from "@grpc/proto-loader";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const SECRET_KEY = "hdgfjdfhgfhkgh";
 
-export const authInterceptor = (method) => {
+const USER_PROTO_PATH = path.join(__dirname, "../../proto/user.proto");
+
+const userDef = protoLoader.loadSync(USER_PROTO_PATH);
+const userPackage = grpc.loadPackageDefinition(userDef).user;
+
+const userClient = new userPackage.UserService(
+  "localhost:50051",
+  grpc.credentials.createInsecure()
+);
+
+export const authInterceptor = (originalMethod) => {
   return (call, callback) => {
-    const metadata = call.metadata;
-
-    if (!metadata || !metadata.get) {
+    const token = call.metadata.get("authorization")[0]?.split(" ")[1];
+    if (!token) {
       return callback({
         code: grpc.status.UNAUTHENTICATED,
-        details: "Missing metadata",
+        message: "Missing token",
+      });
+    }
+    let decoded;
+    try {
+      decoded = jwt.verify(token, SECRET_KEY);
+    } catch (err) {
+      return callback({
+        code: grpc.status.UNAUTHENTICATED,
+        message: "Invalid or expired token",
       });
     }
 
-    const authHeader = metadata.get("authorization")[0];
-
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return callback({
-        code: grpc.status.UNAUTHENTICATED,
-        details: "Invalid or missing token",
-      });
-    }
-
-    const token = authHeader.slice(7);
-
-    jwt.verify(token, SECRET_KEY, (err, decoded) => {
-      if (err) {
+    userClient.GetUserById({ userId: decoded.id }, (err, res) => {
+      if (err || !res) {
         return callback({
           code: grpc.status.UNAUTHENTICATED,
-          details: "Invalid or expired token",
+          message: "User not found or unauthorized",
         });
       }
 
-      call.user = decoded;
-      method(call, callback);
+      call.user = res;
+
+      return originalMethod(call, callback);
     });
   };
 };

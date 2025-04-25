@@ -22,14 +22,12 @@ const userClient = new userPackage.UserService(
 export const authInterceptor = (originalMethod) => {
   return (call, callback) => {
     const token = call.metadata.get("authorization")[0]?.split(" ")[1];
-
     if (!token) {
       return callback({
         code: grpc.status.UNAUTHENTICATED,
         message: "Missing token",
       });
     }
-
     let decoded;
     try {
       decoded = jwt.verify(token, SECRET_KEY);

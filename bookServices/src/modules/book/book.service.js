@@ -32,3 +32,11 @@ export const listBooks = async () => {
     })),
   };
 };
+
+export const deleteBookById = async ({id}) => {
+  const book = await Book.findByIdAndDelete({ _id: id });
+  if (!book) {
+    throw new Error("Book not found");
+  }
+  return book;
+};

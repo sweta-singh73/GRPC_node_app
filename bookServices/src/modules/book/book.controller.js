@@ -1,5 +1,9 @@
-import { addBook, getBookById, listBooks } from "./book.service.js";
-
+import {
+  addBook,
+  deleteBookById,
+  getBookById,
+  listBooks,
+} from "./book.service.js";
 
 export const AddBook = async (call, callback) => {
   try {
@@ -24,6 +28,18 @@ export const ListBooks = async (call, callback) => {
     const books = await listBooks();
     callback(null, books);
   } catch (err) {
+    callback(err);
+  }
+};
+
+export const DeleteBookById = async (call, callback) => {
+  try {
+    await deleteBookById(call.request);
+
+    callback(null, { message: "Book deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting book:", error);
+
     callback(err);
   }
 };
